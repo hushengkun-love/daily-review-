@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>CyberScore Pro</title>
+    <link href="https://fonts.cdnfonts.com/css/digital-7" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-red: #ff2060;
+            --cyber-bg: linear-gradient(15deg, #0a0a12 0%, #1a1a2f 100%);
+        }
+
+        body {
+            margin: 0;
+            background: var(--cyber-bg);
+            color: white;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 粒子画布 */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .cyber-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* 数据卡片 */
+        .data-card {
+            background: rgba(18, 18, 36, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            margin: 2rem 0;
+            padding: 2rem;
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .data-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* 动态光带 */
+        .data-card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(0,243,255,0.2), 
+                transparent);
+            animation: dataStream 3s infinite;
+        }
+
+        @keyframes dataStream {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* 数字评分 */
+        .digital-display {
+            font-family: 'Digital-7', sans-serif;
+            font-size: 3rem;
+            color: var(--neon-red);
+            text-shadow: 0 0 15px rgba(255,32,96,0.5);
+        }
+
+        /* LED评分条 */
+        .led-bar {
+            display: flex;
+            gap: 3px;
+            margin: 1rem 0;
+        }
+
+        .led {
+            width: 30px;
+            height: 5px;
+            background: rgba(255,255,255,0.1);
+            transition: 0.3s;
+        }
+
+        .led.active {
+            background: var(--neon-blue);
+            box-shadow: 0 0 8px var(--neon-blue);
+        }
+
+        /* 动态输入框 */
+        .cyber-input {
+            width: 100%;
+            padding: 1rem;
+            margin: 1rem 0;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--neon-blue);
+            color: white;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+  
+    <div class="cyber-container">
+        <!-- 新增记录区 -->
+        <div class="data-card">
+            <input type="text" class="cyber-input" placeholder="📌 项目名称">
+            <textarea class="cyber-input" placeholder="📝 项目详情..." rows="4"></textarea>
+          
+            <div class="digital-display">8.0</div>
+            <div class="led-bar" id="ledBar">
+                <div class="led"></div>
+                <!-- 自动生成10个LED -->
+            </div>
+
+            <button onclick="saveProject()" class="glow-button">
+                █▓▒► 保存项目
+            </button>
+        </div>
+
+        <!-- 历史记录 -->
+        <div id="projects"></div>
+    </div>
+
+    <script>
+        // 初始化粒子系统
+        function initParticles() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+          
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            class Particle {
+                constructor() {
+                    this.reset();
+                }
+
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 2;
+                    this.vy = (Math.random() - 0.5) * 2;
+                    this.radius = Math.random() * 2;
+                    this.alpha = Math.random() * 0.5 + 0.1;
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 243, 255, ${this.alpha})`;
+                    ctx.fill();
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                  
+                    if (this.x < 0 || this.x > canvas.width || 
+                        this.y < 0 || this.y > canvas.height) {
+                        this.reset();
+                    }
+                }
+            }
+
+            const particles = Array(100).fill().map(() => new Particle());
+
+            function animate() {
+                ctx.fillStyle = 'rgba(10, 10, 30, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+              
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // 初始化LED评分条
+        function createLEDs() {
+            const bar = document.getElementById('ledBar');
+            bar.innerHTML = Array(10).fill()
+                .map(() => `<div class="led"></div>`)
+                .join('');
+        }
+
+        // 保存项目
+        function saveProject() {
+            // 数据保存逻辑
+        }
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            initParticles();
+            createLEDs();
+        });
+    </script>
+</body>
+</html>
